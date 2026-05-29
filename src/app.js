@@ -2,6 +2,9 @@ require("dotenv").config();
 
 const express = require("express");
 const postRoutes = require("./routes/postRoutes");
+const configRoutes = require("./routes/configRoutes");
+const authRoutes = require("./routes/authRoutes");
+const authMiddleware = require("./middleware/auth");
 
 // const morgon = require('morgon')
 
@@ -17,13 +20,16 @@ app.get("/", (req, res) => {
     message: "LinkedIn Automation Tool is running 🚀",
     version: "1.0.0",
     endpoints: {
+      auth: "/api/auth",
       posts: "/api/posts",
       config: "/api/config",
     },
   });
 });
 
-app.use("/api/posts", postRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/posts", authMiddleware, postRoutes);
+app.use("/api/config", authMiddleware, configRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: "Route not found" });

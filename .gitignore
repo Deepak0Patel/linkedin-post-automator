@@ -19,6 +19,12 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+.continue/
 
 # Build
 dist/
+build/
+coverage/
+test-results/
+.eslintcache
+
