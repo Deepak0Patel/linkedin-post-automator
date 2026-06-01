@@ -4,7 +4,7 @@ const logger = require("../utils/logger");
 
 async function generatePost(req, res) {
   try {
-    const { topic, tone, override } = req.body;
+    const { topic, tone } = req.body;
 
     if (!topic || topic.trim().length < 5) {
       return res.status(400).json({
@@ -62,12 +62,7 @@ async function getAllPosts(req, res) {
     return res.json({
       success: true,
       data: posts,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
     logger.error("getAllPosts error:", error.message);
@@ -103,9 +98,7 @@ async function updatePostStatus(req, res) {
     }
 
     const update = { status };
-    if (status === "uploaded") {
-      update.uploadedAt = new Date();
-    }
+    if (status === "uploaded") update.uploadedAt = new Date();
 
     const post = await Post.findByIdAndUpdate(req.params.id, update, {
       new: true,
@@ -126,4 +119,75 @@ async function updatePostStatus(req, res) {
   }
 }
 
-module.exports = { generatePost, getAllPosts, getPostById, updatePostStatus };
+// NEW — DELETE /posts/:id
+async function deletePost(req, res) {
+  try {
+    const post = await Post.findByIdAndDelete(req.params.id);
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+    logger.info(`Post ${req.params.id} deleted`);
+    return res.json({ success: true, message: "Post deleted successfully" });
+  } catch (error) {
+    logger.error("deletePost error:", error.message);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+// NEW — PATCH /posts/:id/schedule
+async function schedulePost(req, res) {
+  try {
+    const { scheduled_at } = req.body;
+
+    if (!scheduled_at) {
+      return res.status(400).json({
+        success: false,
+        message: "scheduled_at is required (ISO date string)",
+      });
+    }
+
+    const scheduledDate = new Date(scheduled_at);
+    if (isNaN(scheduledDate.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "scheduled_at must be a valid ISO date string",
+      });
+    }
+
+    if (scheduledDate < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: "scheduled_at must be a future date",
+      });
+    }
+
+    const post = await Post.findByIdAndUpdate(
+      req.params.id,
+      { status: "scheduled", scheduledAt: scheduledDate },
+      { new: true, runValidators: true },
+    );
+
+    if (!post) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Post not found" });
+    }
+
+    logger.info(`Post ${post._id} scheduled for ${scheduledDate}`);
+    return res.json({ success: true, data: post });
+  } catch (error) {
+    logger.error("schedulePost error:", error.message);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+}
+
+module.exports = {
+  generatePost,
+  getAllPosts,
+  getPostById,
+  updatePostStatus,
+  deletePost,
+  schedulePost,
+};

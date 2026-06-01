@@ -1,21 +1,23 @@
+const express = require("express");
+const router = express.Router();
 const {
   generatePost,
   getAllPosts,
   getPostById,
   updatePostStatus,
+  deletePost,
+  schedulePost,
 } = require("../controllers/postController");
 
-const express = require("express");
-const router = express.Router();
-
 router.post("/generate", generatePost);
-
 router.get("/", getAllPosts);
 
-// 👇 specific before dynamic
+// specific routes before dynamic
 router.patch("/:id/status", updatePostStatus);
+router.patch("/:id/schedule", schedulePost); // NEW
+router.delete("/:id", deletePost); // NEW
 
-// 👇 generic last
+// generic last
 router.get("/:id", getPostById);
 
 module.exports = router;
