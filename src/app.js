@@ -5,14 +5,20 @@ const postRoutes = require("./routes/postRoutes");
 const configRoutes = require("./routes/configRoutes");
 const authRoutes = require("./routes/authRoutes");
 const authMiddleware = require("./middleware/auth");
-
-// const morgon = require('morgon')
+const cors = require("cors");
 
 const app = express();
 const port = process.env.PORT || 4000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  cors({
+    origin: true, // Update if your React dev server uses a different port
+    credentials: true,
+  }),
+);
 
 app.get("/", (req, res) => {
   res.json({
